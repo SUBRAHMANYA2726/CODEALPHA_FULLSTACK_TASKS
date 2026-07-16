@@ -8,26 +8,10 @@ import PostCard from '../components/PostCard';
 
 const CATEGORIES = ['Technology', 'Art', 'Sports', 'Gaming', 'Music', 'Science', 'Fashion', 'Travel'];
 
-const MOCK_HASHTAGS = ['#javascript', '#react', '#webdev', '#design', '#photography', '#ai', '#startup', '#coding'];
-
-const MOCK_POSTS = [
-  {
-    _id: 'mock1', author: { _id: 'u1', name: 'Alex Rivera', username: 'alex_rivera', profilePicture: 'https://i.pravatar.cc/150?u=1', isVerified: true },
-    content: 'Just shipped the new feature! The community response has been incredible 🚀 #launch #buildinpublic',
-    likes: ['1', '2', '3'], comments: [], hashtags: ['launch', 'buildinpublic'], createdAt: new Date().toISOString()
-  },
-  {
-    _id: 'mock2', author: { _id: 'u2', name: 'Sarah Chen', username: 'sarah_art', profilePicture: 'https://i.pravatar.cc/150?u=2' },
-    content: 'Check out my latest photography! 📸 #art #photography',
-    image: 'https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?auto=format&fit=crop&w=800',
-    likes: ['1', '2', '3', '4', '5'], comments: [], hashtags: ['art', 'photography'],
-    createdAt: new Date(Date.now() - 3600000).toISOString()
-  }
-];
-
-const MOCK_USERS = [{ _id: 'u3', name: 'Marcus Johnson', username: 'marcus_johnson', isVerified: false, profilePicture: '' }];
-
-const MOCK_COMMUNITIES = [{ _id: 'c1', name: 'React Developers', members: ['1', '2'] }];
+const MOCK_HASHTAGS = [];
+const MOCK_POSTS = [];
+const MOCK_USERS = [];
+const MOCK_COMMUNITIES = [];
 
 const ensureArray = (data, fallback) => Array.isArray(data) ? data : fallback;
 
