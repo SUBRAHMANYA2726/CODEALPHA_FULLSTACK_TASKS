@@ -118,13 +118,7 @@ const Login = () => {
             </button>
           </form>
 
-          <div className="mt-8 p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5">
-            <p className="font-bold text-xs mb-2 uppercase tracking-wider" style={{ color: 'var(--foreground-muted)' }}>Demo credentials</p>
-            <div className="flex flex-col gap-1 text-sm font-medium">
-              <p>Email: <span className="font-bold" style={{ color: 'var(--primary)' }}>alex@socialsphere.com</span></p>
-              <p>Password: <span className="font-bold" style={{ color: 'var(--primary)' }}>password123</span></p>
-            </div>
-          </div>
+
         </motion.div>
       </div>
     </div>
