@@ -67,7 +67,7 @@ const seedDatabase = async () => {
       email,
       password: defaultPassword,
       profilePicture: `https://i.pravatar.cc/150?u=${i}`,
-      coverPhoto: `https://images.unsplash.com/photo-${1550745165 + i}-9bc0b252726f?auto=format&fit=crop&w=1200`,
+      coverPhoto: `https://picsum.photos/seed/cover${i}/1200/400`,
       bio: bios[i % bios.length],
       isVerified,
       isAdmin: i === 0,
@@ -124,7 +124,7 @@ const seedDatabase = async () => {
         author: randomUser._id,
         type: isReel ? 'reel' : 'post',
         content: isReel ? `Check out this short video! 🎬 #reel #video` : postContents[i % postContents.length],
-        image: hasImage && !isReel ? `https://images.unsplash.com/photo-${1550745165 + i}-9bc0b252726f?auto=format&fit=crop&w=800` : null,
+        image: hasImage && !isReel ? `https://picsum.photos/seed/post${i}/800/600` : null,
         video: isReel ? `https://www.w3schools.com/html/mov_bbb.mp4` : null,
         likes: randomLikes,
         hashtags: ['#socialsphere', isReel ? '#reel' : '#post'],
@@ -202,7 +202,7 @@ const seedDatabase = async () => {
       storiesToCreate.push({
         author: randomUser._id,
         content: ['Morning vibes ☀️', 'Exploring new places 🌍', 'Coffee time ☕', 'Code mode 💻', 'Weekend feels 🎉', 'New project day!', 'Late night grind 🌙', 'Team lunch 🍕'][i % 8],
-        media: `https://images.unsplash.com/photo-${1550000000 + i}-9bc0b252726f?auto=format&fit=crop&w=400&h=800`,
+        media: `https://picsum.photos/seed/story${i}/400/800`,
         mediaType: 'image',
         views: []
       });

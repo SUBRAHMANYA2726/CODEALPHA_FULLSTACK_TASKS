@@ -99,17 +99,17 @@ const CreatePostModal = ({ onClose }) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.15 }}
-        className="w-full max-w-lg card overflow-hidden"
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-lg card overflow-hidden shadow-2xl"
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-          <h2 className="text-sm font-semibold">Create Post</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-white/5 transition-colors" style={{ color: 'var(--foreground-subtle)' }}>
-            <X size={16} />
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
+          <h2 className="text-base font-bold">Create Post</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors bg-black/5" style={{ color: 'var(--foreground-subtle)' }}>
+            <X size={18} />
           </button>
         </div>
 
@@ -242,17 +242,17 @@ const Layout = ({ children }) => {
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
-      <div className="fixed left-0 top-0 h-full z-30 flex-col overflow-hidden hidden md:flex sidebar"
-        style={{ width: sidebarOpen ? 240 : 56, minWidth: sidebarOpen ? 240 : 56, transition: 'width 0.2s ease' }}
+      <div className="fixed left-0 top-0 h-full z-30 flex-col overflow-hidden hidden md:flex sidebar glass-panel border-r-0"
+        style={{ width: sidebarOpen ? 260 : 72, minWidth: sidebarOpen ? 260 : 72, transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
       >
         <Sidebar collapsed={!sidebarOpen} onToggle={() => setSidebarOpen(v => !v)}
           onCreatePost={() => setShowCreatePost(true)} />
       </div>
 
-      <main className="flex-1 flex flex-col min-h-screen transition-all duration-200 lg:mr-[300px]"
-        style={{ marginLeft: sidebarOpen ? 240 : 56 }}
+      <main className="flex-1 flex flex-col min-h-screen transition-all duration-300 lg:mr-[320px]"
+        style={{ marginLeft: sidebarOpen ? 260 : 72 }}
       >
-        <header className="sticky top-0 z-20 flex items-center justify-between px-3 md:px-4 h-12 glass"
+        <header className="sticky top-0 z-20 flex items-center justify-between px-4 md:px-6 h-16 glass-panel"
         >
           <div className="flex items-center gap-2">
             <button className="md:hidden p-1.5 rounded hover:bg-white/5 transition-colors" onClick={() => setSidebarOpen(v => !v)} style={{ color: 'var(--foreground-subtle)' }}>
@@ -383,28 +383,37 @@ const Layout = ({ children }) => {
           </motion.div>
         </AnimatePresence>
 
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around px-3 py-1.5 border-t"
-          style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around px-2 py-3 glass-panel pb-safe">
           {[
             { path: '/', Icon: HomeIcon },
             { path: '/explore', Icon: Compass },
-            { action: () => setShowCreatePost(true), Icon: PlusCircle, primary: true },
             { path: '/trending', Icon: Flame },
             { path: '/notifications', Icon: Bell },
-          ].map(({ path, Icon, action, primary }, i) => (
-            <button key={i} onClick={action || (() => navigate(path))}
-              className={`flex items-center justify-center transition-all ${primary ? 'w-9 h-9 rounded' : 'p-2 rounded hover:bg-white/5'}`}
-              style={primary ? { background: 'var(--primary)' } : {}}
+            { path: `/profile/${user?.username || ''}`, Icon: User },
+          ].map(({ path, Icon }, i) => (
+            <button key={i} onClick={() => navigate(path)}
+              className="p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all relative"
             >
-              <Icon size={18} className={primary ? 'text-white' : ''}
-                style={!primary ? { color: isActive(path) ? 'var(--primary)' : 'var(--foreground-muted)' } : {}} />
+              <Icon size={22} style={{ color: isActive(path) ? 'var(--primary)' : 'var(--foreground-muted)' }} />
+              {isActive(path) && (
+                <motion.div layoutId="navIndicator" className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--primary)' }} />
+              )}
             </button>
           ))}
         </nav>
+
+        {/* Mobile Floating Action Button */}
+        <motion.button 
+          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={() => setShowCreatePost(true)}
+          className="md:hidden fixed bottom-20 right-5 z-40 w-14 h-14 rounded-full btn-primary flex items-center justify-center shadow-xl"
+        >
+          <PlusCircle size={24} />
+        </motion.button>
       </main>
 
-      <div className="hidden lg:flex fixed right-0 top-0 h-full w-80 flex-col border-l z-20 overflow-y-auto no-scrollbar"
-        style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+      <div className="hidden lg:flex fixed right-0 top-0 h-full w-[320px] flex-col border-l z-20 overflow-y-auto no-scrollbar glass-panel"
+        style={{ borderColor: 'var(--border)' }}
       >
         <RightPanel />
       </div>

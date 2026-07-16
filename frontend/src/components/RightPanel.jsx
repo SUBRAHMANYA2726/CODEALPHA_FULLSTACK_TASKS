@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import api from '../lib/api';
-import { Loader2 } from 'lucide-react';
+import { Loader2, TrendingUp, Users, Sparkles, Flame } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RightPanel = () => {
   const qc = useQueryClient();
@@ -47,92 +47,135 @@ const RightPanel = () => {
     return () => window.socket?.off('online_users', handleOnlineUsers);
   }, [user]);
 
+  const SkeletonItem = () => (
+    <div className="flex items-center gap-3 w-full">
+      <div className="w-10 h-10 rounded-full skeleton flex-shrink-0" />
+      <div className="flex-1 space-y-2">
+        <div className="h-3 w-3/4 rounded skeleton" />
+        <div className="h-2 w-1/2 rounded skeleton" />
+      </div>
+    </div>
+  );
+
   return (
-    <aside className="w-full h-full p-4 flex flex-col gap-4 overflow-y-auto no-scrollbar pt-5">
-      <div className="card p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--foreground-muted)' }}>People to Follow</h3>
+    <aside className="w-full h-full p-5 flex flex-col gap-5 overflow-y-auto no-scrollbar pt-6 pb-24 lg:pb-6">
+      
+      {/* Suggestions Section */}
+      <div className="card p-5 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-500">
+          <Users size={64} />
+        </div>
+        <div className="flex items-center gap-2 mb-4 relative z-10">
+          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center text-white shadow-colored">
+            <Sparkles size={16} />
+          </div>
+          <h3 className="text-sm font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>Who to Follow</h3>
         </div>
 
-        {loadingSuggestions ? (
-          <div className="flex justify-center p-3"><Loader2 size={16} className="animate-spin" style={{ color: 'var(--primary)' }} /></div>
-        ) : suggestions?.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {suggestions.slice(0, 4).map(u => (
-              <motion.div key={u._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 group">
-                <Link to={`/profile/${u.username}`} className="flex items-center gap-2 flex-1 min-w-0">
-                  <img src={u.profilePicture || `https://ui-avatars.com/api/?name=${u.name}&background=4FBCFF&color=fff`}
-                    alt={u.name} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold truncate">{u.name}</p>
-                    <p className="text-[10px] truncate" style={{ color: 'var(--foreground-muted)' }}>@{u.username}</p>
-                  </div>
-                </Link>
-                <button
-                  onClick={() => followMutation.mutate(u._id)}
-                  disabled={followMutation.isPending}
-                  className="px-2.5 py-1 rounded text-[11px] font-bold transition-all flex-shrink-0"
-                  style={{ background: 'var(--primary)', color: 'white' }}
+        <div className="flex flex-col gap-4 relative z-10">
+          {loadingSuggestions ? (
+            <>
+              <SkeletonItem />
+              <SkeletonItem />
+              <SkeletonItem />
+            </>
+          ) : suggestions?.length > 0 ? (
+            <AnimatePresence>
+              {suggestions.slice(0, 4).map((u, i) => (
+                <motion.div key={u._id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+                  className="flex items-center gap-3 group/user"
                 >
-                  Follow
-                </button>
-              </motion.div>
-            ))}
+                  <Link to={`/profile/${u.username}`} className="flex items-center gap-3 flex-1 min-w-0">
+                    <img src={u.profilePicture || `https://ui-avatars.com/api/?name=${u.name}&background=5c3ce6&color=fff`}
+                      alt={u.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-transparent group-hover/user:border-[var(--primary)] transition-all" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold truncate group-hover/user:text-[var(--primary)] transition-colors">{u.name}</p>
+                      <p className="text-[11px] truncate" style={{ color: 'var(--foreground-muted)' }}>@{u.username}</p>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => followMutation.mutate(u._id)}
+                    disabled={followMutation.isPending}
+                    className="px-4 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0 hover:scale-105 active:scale-95"
+                    style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}
+                  >
+                    Follow
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          ) : (
+            <p className="text-xs text-center py-4 bg-black/5 dark:bg-white/5 rounded-xl" style={{ color: 'var(--foreground-subtle)' }}>No suggestions right now</p>
+          )}
+        </div>
+      </div>
+
+      {/* Trending Section */}
+      <div className="card p-5 relative overflow-hidden group">
+        <div className="absolute -bottom-4 -right-4 p-4 opacity-5 pointer-events-none group-hover:rotate-12 transition-transform duration-500">
+          <TrendingUp size={80} />
+        </div>
+        <div className="flex items-center gap-2 mb-4 relative z-10">
+          <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+            <Flame size={18} />
           </div>
-        ) : (
-          <p className="text-xs text-center py-2" style={{ color: 'var(--foreground-muted)' }}>No suggestions</p>
-        )}
-      </div>
-
-      <div className="card p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--foreground-muted)' }}>Trending Topics</h3>
+          <h3 className="text-sm font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>Trending Topics</h3>
         </div>
 
-        {loadingTrending ? (
-          <div className="flex justify-center p-3"><Loader2 size={16} className="animate-spin" style={{ color: 'var(--primary)' }} /></div>
-        ) : hashtags.length > 0 ? (
-          <div className="flex flex-col gap-0.5">
-            {hashtags.map(({ tag, count }, i) => (
-              <motion.div key={tag}
-                className="flex items-center justify-between p-2 -mx-2 rounded cursor-pointer hover:bg-white/5 transition-colors"
-              >
-                <div>
-                  <p className="text-[10px] font-medium" style={{ color: 'var(--foreground-subtle)' }}>Trending</p>
-                  <p className="font-semibold text-sm">#{tag}</p>
-                  <p className="text-[10px]" style={{ color: 'var(--foreground-muted)' }}>{count} post{count !== 1 ? 's' : ''}</p>
-                </div>
-                <div className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold"
-                  style={{ background: 'var(--muted)', color: 'var(--foreground-muted)' }}>
-                  {i + 1}
-                </div>
-              </motion.div>
-            ))}
+        <div className="flex flex-col relative z-10">
+          {loadingTrending ? (
+            <div className="space-y-4">
+              <SkeletonItem />
+              <SkeletonItem />
+            </div>
+          ) : hashtags.length > 0 ? (
+            <AnimatePresence>
+              {hashtags.map(({ tag, count }, i) => (
+                <motion.div key={tag} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  className="flex items-center justify-between p-3 -mx-3 rounded-xl cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors group/tag"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-bold mt-0.5 transition-colors"
+                      style={{ background: 'var(--muted)', color: 'var(--foreground-muted)' }}>
+                      {i + 1}
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'var(--foreground-subtle)' }}>Trending</p>
+                      <p className="font-bold text-[15px] group-hover/tag:text-[var(--primary)] transition-colors">#{tag}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>{count} post{count !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          ) : (
+            <p className="text-xs text-center py-4 bg-black/5 dark:bg-white/5 rounded-xl" style={{ color: 'var(--foreground-subtle)' }}>Nothing trending</p>
+          )}
+        </div>
+      </div>
+
+      {/* Online Users Minimal Indicator */}
+      <div className="flex items-center justify-between px-2 py-3 rounded-xl bg-green-500/10 border border-green-500/20">
+        <div className="flex items-center gap-2">
+          <div className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
           </div>
-        ) : (
-          <p className="text-xs text-center py-2" style={{ color: 'var(--foreground-muted)' }}>Nothing trending</p>
-        )}
+          <span className="text-xs font-bold text-green-600 dark:text-green-400">Users Online</span>
+        </div>
+        <span className="font-bold text-sm text-green-600 dark:text-green-400">{onlineFriends.length + 1}</span>
       </div>
 
-      <div className="card p-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold">Users Online</p>
-          <p className="text-[10px]" style={{ color: 'var(--foreground-muted)' }}>Right now</p>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full" style={{ background: '#22C55E' }} />
-          <span className="font-bold text-sm">{onlineFriends.length + 1}</span>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] mt-auto pb-4" style={{ color: 'var(--foreground-subtle)' }}>
-        <span className="hover:underline cursor-pointer">Privacy</span>
-        <span className="hover:underline cursor-pointer">Terms</span>
-        <span className="hover:underline cursor-pointer">About</span>
-        <span>© 2026 SocialSphere</span>
+      {/* Footer Links */}
+      <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] mt-auto pb-2 justify-center" style={{ color: 'var(--foreground-subtle)' }}>
+        <span className="hover:text-[var(--primary)] cursor-pointer transition-colors">Privacy Policy</span>
+        <span className="hover:text-[var(--primary)] cursor-pointer transition-colors">Terms of Service</span>
+        <span className="hover:text-[var(--primary)] cursor-pointer transition-colors">About Us</span>
+        <span className="w-full text-center mt-2">© 2026 SocialSphere</span>
       </div>
     </aside>
   );
 };
 
 export default RightPanel;
+

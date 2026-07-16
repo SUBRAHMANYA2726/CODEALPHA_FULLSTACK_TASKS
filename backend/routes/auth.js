@@ -29,7 +29,7 @@ router.post('/register', async (req, res) => {
       { expiresIn: '5 days' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, name: user.name, username: user.username, email: user.email, profilePicture: user.profilePicture } });
+        res.json({ token, user: { _id: user.id, id: user.id, name: user.name, username: user.username, email: user.email, profilePicture: user.profilePicture } });
       }
     );
   } catch (err) {
@@ -60,7 +60,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '5 days' },
       (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, name: user.name, username: user.username, email: user.email, profilePicture: user.profilePicture } });
+        res.json({ token, user: { _id: user.id, id: user.id, name: user.name, username: user.username, email: user.email, profilePicture: user.profilePicture } });
       }
     );
   } catch (err) {

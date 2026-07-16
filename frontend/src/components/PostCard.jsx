@@ -1,16 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Share2, Bookmark, MoreHorizontal, Trash2, Edit3, Flag, Send, ChevronUp, ChevronDown } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Bookmark, ChevronDown, ChevronUp, Edit3, Flag, MessageCircle, MoreHorizontal, Send, Share2, Trash2, Heart } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
-import { useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { Link } from 'react-router-dom';
 import ImageLightbox from './ImageLightbox';
 
 const PostCard = ({ post, onDelete }) => {
-  const { user } = useAuth();
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   const [liked, setLiked] = useState(post.likes?.includes(user?._id));
   const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
@@ -35,17 +35,11 @@ const PostCard = ({ post, onDelete }) => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleVote = async (type) => {
+  const handleVote = async () => {
     const wasLiked = liked;
-    if (type === 'up') {
-      if (wasLiked) {
-        setLiked(false);
-        setLikesCount(c => c - 1);
-      } else {
-        setLiked(true);
-        setLikesCount(prev => (wasLiked ? prev : prev + 1));
-      }
-    }
+    setLiked(!wasLiked);
+    setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
+    
     try {
       await api.post(`/posts/${post._id}/like`);
       qc.invalidateQueries(['posts']);
@@ -58,8 +52,11 @@ const PostCard = ({ post, onDelete }) => {
   const handleBookmark = async () => {
     const was = bookmarked;
     setBookmarked(!was);
-    try { await api.post(`/posts/${post._id}/bookmark`); }
-    catch { setBookmarked(was); }
+    try {
+      await api.post(`/posts/${post._id}/bookmark`);
+    } catch {
+      setBookmarked(was);
+    }
   };
 
   const handleShare = async () => {
@@ -76,9 +73,9 @@ const PostCard = ({ post, onDelete }) => {
       try {
         const res = await api.get(`/posts/${post._id}/comments`);
         setComments(res.data);
-      } catch {}
+      } catch { }
     }
-    setShowComments(v => !v);
+    setShowComments((v) => !v);
   };
 
   const submitComment = async (e) => {
@@ -87,7 +84,7 @@ const PostCard = ({ post, onDelete }) => {
     setSubmittingComment(true);
     try {
       const res = await api.post(`/posts/${post._id}/comments`, { text: commentText });
-      setComments(prev => [...prev, res.data]);
+      setComments((prev) => [...prev, res.data]);
       setCommentText('');
       qc.invalidateQueries(['posts']);
     } catch (err) {
@@ -124,201 +121,207 @@ const PostCard = ({ post, onDelete }) => {
     if (!reason) return;
     try {
       await api.post('/reports', { targetType: 'Post', targetId: post._id, reason });
-    } catch {}
+    } catch { }
     setShowMenu(false);
   };
 
   const timeAgo = (() => {
-    try { return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }); }
-    catch { return 'recently'; }
+    try {
+      return formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
+    } catch {
+      return 'recently';
+    }
   })();
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className="card overflow-hidden flex"
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="card group overflow-hidden mb-6 flex flex-col transition-all duration-300 hover:shadow-xl dark:hover:shadow-colored/10 border border-transparent hover:border-gray-200 dark:hover:border-white/10 relative"
     >
-      <div className="flex flex-col items-center gap-1 pt-3 pb-2 px-2 w-10 flex-shrink-0" style={{ background: 'var(--muted)' }}>
-        <button onClick={() => handleVote('up')}
-          className="p-1 rounded transition-colors hover:bg-white/5"
-          style={{ color: liked ? 'var(--upvote)' : 'var(--foreground-subtle)' }}>
-          <ChevronUp size={20} strokeWidth={liked ? 3 : 2} />
-        </button>
-        <span className="text-xs font-bold leading-none" style={{ color: liked ? 'var(--upvote)' : 'var(--foreground-muted)' }}>
-          {likesCount}
-        </span>
-        <button onClick={() => {}}
-          className="p-1 rounded transition-colors hover:bg-white/5"
-          style={{ color: 'var(--foreground-subtle)' }}>
-          <ChevronDown size={20} />
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-light)] to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none" />
+
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 relative z-10">
+        <Link to={`/profile/${post.author?.username}`} className="flex items-center gap-3 group/user">
+          <img src={post.author?.profilePicture || `https://ui-avatars.com/api/?name=${post.author?.name}&background=5c3ce6&color=fff`}
+            alt={post.author?.name} className="w-11 h-11 rounded-full object-cover shadow-sm border-2 border-transparent group-hover/user:border-[var(--primary)] transition-all" />
+          <div>
+            <div className="flex items-center gap-1.5">
+              <p className="font-bold text-[15px] leading-none group-hover/user:text-[var(--primary)] transition-colors">{post.author?.name}</p>
+              {post.author?.isVerified && (
+                <span className="w-4 h-4 bg-blue-500 text-white rounded-full flex items-center justify-center text-[10px]">✓</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-xs mt-1" style={{ color: 'var(--foreground-muted)' }}>
+              <span>@{post.author?.username}</span>
+              <span>·</span>
+              <span>{timeAgo}</span>
+            </div>
+          </div>
+        </Link>
+
+        <div className="relative" ref={menuRef}>
+          <button type="button" onClick={() => setShowMenu((v) => !v)} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+            <MoreHorizontal size={18} />
+          </button>
+          <AnimatePresence>
+            {showMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                transition={{ duration: 0.12 }}
+                className="absolute right-0 top-10 w-44 card shadow-xl z-20 overflow-hidden py-1 border"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                {isOwner && (
+                  <>
+                    <button type="button" onClick={() => { setIsEditing(true); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5 text-left transition-colors font-medium" style={{ color: 'var(--foreground)' }}>
+                      <Edit3 size={16} /> Edit
+                    </button>
+                    <button type="button" onClick={handleDelete} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-500/10 text-left transition-colors font-medium text-red-500">
+                      <Trash2 size={16} /> Delete
+                    </button>
+                    <div className="border-t mx-3 my-1" style={{ borderColor: 'var(--border)' }} />
+                  </>
+                )}
+                <button type="button" onClick={handleReport} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5 text-left transition-colors font-medium" style={{ color: 'var(--foreground)' }}>
+                  <Flag size={16} /> Report
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 pb-3 relative z-10">
+        {isEditing ? (
+          <div className="flex flex-col gap-3">
+            <textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={3} className="w-full rounded-xl border p-4 text-[15px] resize-none focus:outline-none focus:ring-2 ring-[var(--primary-light)] transition-all shadow-inner bg-black/5 dark:bg-white/5" style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }} />
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 rounded-full text-sm font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors">Cancel</button>
+              <button type="button" onClick={handleEdit} className="btn-primary px-5 py-2 rounded-full text-sm font-bold shadow-colored">Save</button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-[15px] leading-relaxed whitespace-pre-wrap font-medium" style={{ color: 'var(--foreground)' }}>
+            {post.content}
+          </p>
+        )}
+
+        {post.hashtags?.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {post.hashtags.map((tag, i) => (
+              <Link to={`/trending`} key={i} className="text-[13px] font-bold hover:underline transition-all" style={{ color: 'var(--primary)' }}>#{tag}</Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Media (Edge-to-Edge) */}
+      {(post.image || post.video) && (
+        <div className="w-full relative z-10 mt-1 cursor-pointer bg-black/5 dark:bg-white/5" onClick={() => setLightboxOpen(true)}>
+          {post.image && (
+            <img src={post.image} alt="Post content" className="w-full max-h-[500px] object-cover transition-opacity hover:opacity-95" />
+          )}
+          {post.video && (
+            <video src={post.video} controls className="w-full max-h-[500px] object-contain bg-black" />
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center justify-between px-2 py-2 relative z-10 border-t border-black/5 dark:border-white/5">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleVote}
+            className={`flex items-center gap-2 px-3 py-2 rounded-full font-bold text-sm transition-all hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-95 ${liked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}
+          >
+            <Heart size={20} fill={liked ? 'currentColor' : 'none'} className={liked ? 'scale-110' : ''} style={{ transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }} />
+            <span>{likesCount}</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={toggleComments}
+            className={`flex items-center gap-2 px-3 py-2 rounded-full font-bold text-sm transition-all hover:bg-blue-50 dark:hover:bg-blue-500/10 active:scale-95 ${showComments ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'}`}
+          >
+            <MessageCircle size={20} fill={showComments ? 'currentColor' : 'none'} />
+            <span>{comments.length}</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleShare}
+            className="flex items-center gap-2 px-3 py-2 rounded-full font-bold text-sm transition-all hover:bg-green-50 dark:hover:bg-green-500/10 active:scale-95 text-gray-500 dark:text-gray-400"
+          >
+            <Share2 size={20} />
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleBookmark}
+          className={`flex items-center gap-2 px-3 py-2 rounded-full font-bold text-sm transition-all hover:bg-purple-50 dark:hover:bg-purple-500/10 active:scale-95 ${bookmarked ? 'text-purple-500' : 'text-gray-500 dark:text-gray-400'}`}
+        >
+          <Bookmark size={20} fill={bookmarked ? 'currentColor' : 'none'} />
         </button>
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
-          <Link to={`/profile/${post.author?.username}`} className="flex items-center gap-2 group min-w-0">
-            <img src={post.author?.profilePicture || `https://ui-avatars.com/api/?name=${post.author?.name}&background=4FBCFF&color=fff`}
-              alt={post.author?.name} className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
-            <span className="text-xs font-semibold truncate group-hover:underline" style={{ color: 'var(--foreground-muted)' }}>
-              {post.author?.username || 'user'}
-            </span>
-            {post.author?.isVerified && (
-              <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 20 20" fill="var(--primary)">
-                <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
-              </svg>
-            )}
-            <span className="text-xs" style={{ color: 'var(--foreground-subtle)' }}>· {timeAgo}</span>
-          </Link>
-
-          <div className="relative" ref={menuRef}>
-            <button onClick={() => setShowMenu(v => !v)} className="p-1 rounded hover:bg-white/5 transition-colors" style={{ color: 'var(--foreground-subtle)' }}>
-              <MoreHorizontal size={16} />
-            </button>
-            <AnimatePresence>
-              {showMenu && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  transition={{ duration: 0.12 }}
-                  className="absolute right-0 top-8 w-44 card shadow-md z-20 overflow-hidden py-1"
-                >
-                  {isOwner && (
-                    <>
-                      <button onClick={() => { setIsEditing(true); setShowMenu(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 text-left transition-colors" style={{ color: 'var(--foreground)' }}>
-                        <Edit3 size={14} /> Edit
-                      </button>
-                      <button onClick={handleDelete}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 text-left transition-colors"
-                        style={{ color: 'var(--secondary)' }}>
-                        <Trash2 size={14} /> Delete
-                      </button>
-                      <div className="border-t mx-2 my-1" style={{ borderColor: 'var(--border)' }} />
-                    </>
-                  )}
-                  <button onClick={handleReport}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/5 text-left transition-colors" style={{ color: 'var(--foreground)' }}>
-                    <Flag size={14} /> Report
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        <div className="px-3 pb-1">
-          {isEditing ? (
-            <div className="flex flex-col gap-2">
-              <textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={3}
-                className="w-full rounded border p-2 text-sm resize-none focus:outline-none" style={{ borderColor: 'var(--border)', color: 'var(--foreground)', background: 'var(--muted)' }}
-              />
-              <div className="flex gap-2 justify-end">
-                <button onClick={() => setIsEditing(false)} className="btn btn-ghost px-3 py-1 text-xs">Cancel</button>
-                <button onClick={handleEdit} className="btn btn-primary px-3 py-1 text-xs">Save</button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
-          )}
-
-          {post.hashtags?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {post.hashtags.map((tag, i) => (
-                <span key={i} className="text-xs font-semibold" style={{ color: 'var(--primary)' }}>#{tag}</span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {post.image && (
-          <div className="mt-2 overflow-hidden cursor-pointer" onClick={() => setLightboxOpen(true)}>
-            <img src={post.image} alt="Post content"
-              className="w-full max-h-[400px] object-cover hover:opacity-95 transition-opacity" />
-          </div>
-        )}
-
-        {post.video && (
-          <div className="mt-2 overflow-hidden">
-            <video src={post.video} controls className="w-full max-h-[400px]" />
-          </div>
-        )}
-
-        <div className="flex items-center gap-1 px-1 py-1 border-t" style={{ borderColor: 'var(--border)' }}>
-          <button onClick={toggleComments}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold hover:bg-white/5 transition-colors"
-            style={{ color: showComments ? 'var(--primary)' : 'var(--foreground-muted)' }}>
-            <MessageCircle size={14} fill={showComments ? 'currentColor' : 'none'} strokeWidth={showComments ? 0 : 2} />
-            {comments.length}
-          </button>
-
-          <button onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold hover:bg-white/5 transition-colors"
-            style={{ color: 'var(--foreground-muted)' }}>
-            <Share2 size={14} />
-            Share
-          </button>
-
-          <button onClick={handleBookmark}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold hover:bg-white/5 transition-colors"
-            style={{ color: bookmarked ? 'var(--foreground)' : 'var(--foreground-muted)' }}>
-            <Bookmark size={14} fill={bookmarked ? 'currentColor' : 'none'} strokeWidth={bookmarked ? 0 : 2} />
-            Save
-          </button>
-        </div>
-
-        <AnimatePresence>
-          {showComments && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }} className="overflow-hidden border-t" style={{ borderColor: 'var(--border)' }}
-            >
-              <div className="px-3 py-3">
-                <div className="flex flex-col gap-2 max-h-48 overflow-y-auto no-scrollbar">
-                  {comments.length === 0 && (
-                    <p className="text-xs text-center py-2" style={{ color: 'var(--foreground-subtle)' }}>No comments yet</p>
-                  )}
-                  {comments.map(comment => (
-                    <div key={comment._id} className="flex gap-2">
-                      <img src={comment.author?.profilePicture || `https://ui-avatars.com/api/?name=${comment.author?.name}&background=4FBCFF&color=fff`}
-                        className="w-6 h-6 rounded-full object-cover flex-shrink-0" alt="" />
-                      <div className="flex-1 rounded px-2.5 py-1.5" style={{ background: 'var(--muted)' }}>
-                        <span className="text-xs font-bold mr-1.5" style={{ color: 'var(--foreground-muted)' }}>{comment.author?.username}</span>
-                        <span className="text-xs">{comment.text}</span>
-                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--foreground-subtle)' }}>
-                          {(() => { try { return formatDistanceToNow(new Date(comment.createdAt || Date.now()), { addSuffix: true }); } catch { return 'recently'; } })()}
-                        </p>
+      {/* Comments Section */}
+      <AnimatePresence>
+        {showComments && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: 'easeInOut' }} className="overflow-hidden border-t border-black/5 dark:border-white/5 bg-black/5 dark:bg-white/5">
+            <div className="p-4">
+              <div className="flex flex-col gap-4 max-h-64 overflow-y-auto no-scrollbar">
+                {comments.length === 0 && <p className="text-sm text-center py-4 text-gray-500 font-medium">Be the first to comment!</p>}
+                
+                {comments.map((comment) => (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={comment._id} className="flex gap-3 group/comment">
+                    <img src={comment.author?.profilePicture || `https://ui-avatars.com/api/?name=${comment.author?.name}&background=5c3ce6&color=fff`} className="w-8 h-8 rounded-full object-cover flex-shrink-0 shadow-sm" alt="" />
+                    <div className="flex-1">
+                      <div className="inline-block rounded-2xl rounded-tl-sm px-4 py-2.5 bg-white dark:bg-[#1e1e24] shadow-sm border border-black/5 dark:border-white/5">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[13px] font-bold" style={{ color: 'var(--foreground)' }}>{comment.author?.name}</span>
+                          <span className="text-[10px] font-semibold text-gray-400">
+                            {(() => {
+                              try {
+                                return formatDistanceToNow(new Date(comment.createdAt || Date.now()), { addSuffix: true });
+                              } catch {
+                                return 'recently';
+                              }
+                            })()}
+                          </span>
+                        </div>
+                        <p className="text-[13px] font-medium" style={{ color: 'var(--foreground)' }}>{comment.text}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </motion.div>
+                ))}
 
-                <form onSubmit={submitComment} className="flex gap-2 mt-3">
-                  <img src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name}&background=4FBCFF&color=fff`}
-                    className="w-6 h-6 rounded-full object-cover flex-shrink-0" alt="" />
-                  <div className="flex-1 flex items-center gap-2 rounded border px-3"
-                    style={{ background: 'var(--muted)', borderColor: 'var(--border)' }}
-                  >
-                    <input type="text" value={commentText} onChange={e => setCommentText(e.target.value)}
-                      placeholder="Add a comment" className="flex-1 bg-transparent border-none outline-none text-xs py-1.5" />
-                    <button type="submit" disabled={!commentText.trim() || submittingComment}
-                      style={{ color: commentText.trim() ? 'var(--primary)' : 'var(--foreground-subtle)' }}>
-                      <Send size={12} />
+                <form onSubmit={submitComment} className="flex gap-3 mt-2">
+                  <img src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name}&background=5c3ce6&color=fff`} className="w-9 h-9 rounded-full object-cover flex-shrink-0 shadow-sm" alt="" />
+                  <div className="flex-1 flex items-center gap-2 rounded-full bg-white dark:bg-[#1e1e24] px-4 py-1.5 shadow-sm border border-black/5 dark:border-white/5 focus-within:ring-2 ring-[var(--primary-light)] transition-all">
+                    <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Write a comment..." className="flex-1 bg-transparent border-none outline-none text-sm font-medium h-9" />
+                    <button type="submit" disabled={!commentText.trim() || submittingComment} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors disabled:opacity-50" style={{ color: commentText.trim() ? 'var(--primary)' : 'var(--foreground-muted)' }}>
+                      <Send size={16} className={commentText.trim() ? '-translate-y-0.5 translate-x-0.5 transition-transform' : ''} />
                     </button>
                   </div>
                 </form>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {lightboxOpen && post.image && (
-        <ImageLightbox src={post.image} alt="Post image" onClose={() => setLightboxOpen(false)} />
-      )}
+      {lightboxOpen && post.image && <ImageLightbox src={post.image} alt="Post image" onClose={() => setLightboxOpen(false)} />}
     </motion.article>
   );
 };
 
 export default PostCard;
+

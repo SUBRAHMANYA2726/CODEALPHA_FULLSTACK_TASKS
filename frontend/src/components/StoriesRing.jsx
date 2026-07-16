@@ -4,6 +4,7 @@ import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import StoryViewer from './StoryViewer';
+import { Plus } from 'lucide-react';
 
 const StoriesRing = () => {
   const { user } = useAuth();
@@ -25,20 +26,20 @@ const StoriesRing = () => {
 
   return (
     <>
-      <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex gap-4 overflow-x-auto pb-4 pt-2 no-scrollbar px-1">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-1.5 cursor-pointer min-w-[64px] group"
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex flex-col items-center gap-2 cursor-pointer min-w-[72px] group"
         >
-          <div className="relative w-14 h-14 rounded-full border-2 border-dashed flex items-center justify-center" style={{ borderColor: 'var(--border-strong)' }}>
-            <img src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name}&background=4FBCFF&color=fff`}
-              alt="Your story" className="w-[52px] h-[52px] rounded-full object-cover" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-white border-2" style={{ background: 'var(--primary)', borderColor: 'var(--background)' }}>
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+          <div className="relative w-16 h-16 rounded-full flex items-center justify-center p-[2px] border-2 border-dashed border-gray-300 dark:border-white/20 group-hover:border-[var(--primary)] transition-colors">
+            <img src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name}&background=5c3ce6&color=fff`}
+              alt="Your story" className="w-full h-full rounded-full object-cover p-0.5" />
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-white border-2 border-[var(--background)] gradient-primary shadow-colored group-hover:scale-110 transition-transform">
+              <Plus strokeWidth={3} size={14} />
             </div>
           </div>
-          <span className="text-[11px] truncate max-w-[64px]" style={{ color: 'var(--foreground-muted)' }}>Your Story</span>
+          <span className="text-xs font-semibold truncate max-w-[72px]" style={{ color: 'var(--foreground)' }}>Your Story</span>
         </motion.div>
 
         {validStories.map((storyGroup, idx) => {
@@ -46,18 +47,23 @@ const StoriesRing = () => {
           return (
             <motion.div
               key={storyGroup._id || idx}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: idx * 0.03 }}
-              className="flex flex-col items-center gap-1.5 cursor-pointer min-w-[64px] group"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              className="flex flex-col items-center gap-2 cursor-pointer min-w-[72px] group"
               onClick={() => setViewingIndex(idx)}
             >
-              <div className="w-14 h-14 rounded-full p-[2px]" style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}>
-                <img src={author.profilePicture || `https://ui-avatars.com/api/?name=${author.name}&background=4FBCFF&color=fff`}
-                  alt={author.name} className="w-full h-full rounded-full border-2 object-cover" style={{ borderColor: 'var(--background)' }} />
+              <div className="relative w-16 h-16 rounded-full p-[3px] group-hover:scale-105 transition-transform duration-300">
+                {/* Animated Ring */}
+                <div className="absolute inset-0 rounded-full animate-[spin_4s_linear_infinite]" style={{ background: 'linear-gradient(90deg, #2563EB, #8B5CF6, #EC4899, #2563EB)' }} />
+                {/* Image Container (blocks center of ring) */}
+                <div className="relative w-full h-full rounded-full border-[3px] border-[var(--background)] bg-[var(--background)] overflow-hidden">
+                  <img src={author.profilePicture || `https://ui-avatars.com/api/?name=${author.name}&background=5c3ce6&color=fff`}
+                    alt={author.name} className="w-full h-full object-cover" />
+                </div>
               </div>
-              <span className="text-[11px] truncate max-w-[64px]" style={{ color: 'var(--foreground-muted)' }}>
-                {author.username || 'user'}
+              <span className="text-xs font-semibold truncate max-w-[72px] group-hover:text-[var(--primary)] transition-colors" style={{ color: 'var(--foreground)' }}>
+                {author.name.split(' ')[0]}
               </span>
             </motion.div>
           );
@@ -78,3 +84,4 @@ const StoriesRing = () => {
 };
 
 export default StoriesRing;
+

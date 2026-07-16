@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, ArrowLeft, Loader2 } from 'lucide-react';
+import { MessageSquare, X, Send, ArrowLeft, Loader2, Plus, Smile } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
@@ -67,6 +67,15 @@ const ChatWidget = () => {
     }
   }, [messages, isOpen]);
 
+  useEffect(() => {
+    const handleOpenChat = (e) => {
+      setIsOpen(true);
+      setActivePartner(e.detail);
+    };
+    window.addEventListener('open-chat', handleOpenChat);
+    return () => window.removeEventListener('open-chat', handleOpenChat);
+  }, []);
+
   const handleSend = (e) => {
     e.preventDefault();
     if (!inputText.trim() || !activePartner) return;
@@ -93,63 +102,65 @@ const ChatWidget = () => {
           <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="w-[380px] h-[520px] rounded-2xl flex flex-col overflow-hidden origin-bottom-right shadow-2xl card"
+            className="w-[92vw] sm:w-[400px] h-[75vh] sm:h-[580px] max-h-[700px] rounded-2xl flex flex-col overflow-hidden origin-bottom-right shadow-2xl glass-panel"
           >
-            <div className="p-4 flex justify-between items-center border-b"
-              style={{ background: 'linear-gradient(135deg, #2563EB, #8B5CF6)', borderColor: 'rgba(255,255,255,0.1)' }}>
+            {/* Header */}
+            <div className="p-4 flex justify-between items-center border-b glass-panel sticky top-0 z-10"
+              style={{ borderColor: 'var(--border)' }}>
               <div className="flex items-center gap-3">
                 {activePartner && (
-                  <button onClick={() => setActivePartner(null)} className="p-1 hover:bg-white/20 rounded-full transition-colors text-white">
+                  <button onClick={() => setActivePartner(null)} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
                     <ArrowLeft size={18} />
                   </button>
                 )}
                 {!activePartner ? (
-                  <h3 className="font-bold text-lg text-white">Messages</h3>
+                  <h3 className="font-bold text-lg" style={{ color: 'var(--foreground)' }}>Messages</h3>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <div className="relative">
-                      <img src={activePartner.profilePicture || `https://ui-avatars.com/api/?name=${activePartner.name}&background=fff&color=2563EB`}
-                        alt="" className="w-8 h-8 rounded-full object-cover border-2 border-white/50" />
-                      <div className="online-dot absolute -bottom-0.5 -right-0.5" style={{ width: 8, height: 8 }} />
+                      <img src={activePartner.profilePicture || `https://ui-avatars.com/api/?name=${activePartner.name}&background=5c3ce6&color=fff`}
+                        alt="" className="w-10 h-10 rounded-full object-cover border border-[var(--border)] shadow-sm" />
+                      <div className="online-dot absolute bottom-0 right-0" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm leading-tight text-white">{activePartner.name}</h3>
-                      <p className="text-xs text-white/70">@{activePartner.username}</p>
+                      <h3 className="font-bold text-[15px] leading-tight" style={{ color: 'var(--foreground)' }}>{activePartner.name}</h3>
+                      <p className="text-xs font-medium" style={{ color: 'var(--foreground-muted)' }}>@{activePartner.username}</p>
                     </div>
                   </div>
                 )}
               </div>
-              <button onClick={() => setIsOpen(false)} className="p-2 rounded-full hover:bg-white/20 transition-colors text-white">
+              <button onClick={() => setIsOpen(false)} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                 <X size={18} />
               </button>
             </div>
 
+            {/* Content Area */}
             <div className="flex-1 overflow-y-auto flex flex-col" style={{ background: 'var(--background)' }}>
               {!activePartner ? (
                 loadingInbox ? (
-                  <div className="flex-1 flex justify-center items-center"><Loader2 size={24} className="animate-spin" style={{ color: 'var(--primary)' }} /></div>
+                  <div className="flex-1 flex justify-center items-center"><Loader2 size={24} className="animate-spin text-[var(--primary)]" /></div>
                 ) : inbox?.length > 0 ? (
                   <div className="flex flex-col">
                     {inbox.map((chat) => (
                       <button key={chat.partner._id} onClick={() => setActivePartner(chat.partner)}
-                        className="flex items-center gap-3 p-4 hover:bg-muted transition-colors border-b text-left"
+                        className="flex items-center gap-4 p-4 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border-b text-left group"
                         style={{ borderColor: 'var(--border)' }}
                       >
                         <div className="relative">
-                          <img src={chat.partner.profilePicture || `https://ui-avatars.com/api/?name=${chat.partner.name}&background=2563EB&color=fff`}
-                            alt="" className="w-11 h-11 rounded-full object-cover" />
-                          <div className="online-dot absolute -bottom-0.5 -right-0.5" style={{ width: 8, height: 8 }} />
+                          <img src={chat.partner.profilePicture || `https://ui-avatars.com/api/?name=${chat.partner.name}&background=5c3ce6&color=fff`}
+                            alt="" className="w-12 h-12 rounded-full object-cover shadow-sm group-hover:shadow-md transition-all border border-transparent group-hover:border-[var(--primary)]" />
+                          <div className="online-dot absolute bottom-0 right-0 border-2 border-[var(--background)]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-baseline mb-0.5">
-                            <span className="font-bold text-sm truncate">{chat.partner.name}</span>
+                          <div className="flex justify-between items-baseline mb-1">
+                            <span className="font-bold text-[15px] truncate group-hover:text-[var(--primary)] transition-colors">{chat.partner.name}</span>
                           </div>
-                          <p className={`text-xs truncate ${chat.unread > 0 ? 'font-bold' : ''}`} style={{ color: chat.unread > 0 ? 'var(--foreground)' : 'var(--foreground-muted)' }}>
+                          <p className={`text-[13px] truncate ${chat.unread > 0 ? 'font-bold' : 'font-medium'}`} style={{ color: chat.unread > 0 ? 'var(--foreground)' : 'var(--foreground-muted)' }}>
                             {chat.lastMessage.sender._id === user?._id ? 'You: ' : ''}{chat.lastMessage.text || 'Sent an attachment'}
                           </p>
                         </div>
                         {chat.unread > 0 && (
-                          <span className="w-5 h-5 flex items-center justify-center rounded-full text-white text-[10px] font-bold gradient-primary">
+                          <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full text-white text-[11px] font-bold gradient-primary shadow-colored">
                             {chat.unread}
                           </span>
                         )}
@@ -157,25 +168,35 @@ const ChatWidget = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-sm" style={{ color: 'var(--foreground-muted)' }}>No messages yet</div>
+                  <div className="flex-1 flex items-center justify-center text-sm font-medium" style={{ color: 'var(--foreground-muted)' }}>No messages yet</div>
                 )
               ) : (
                 loadingChat ? (
-                  <div className="flex-1 flex justify-center items-center"><Loader2 size={24} className="animate-spin" style={{ color: 'var(--primary)' }} /></div>
+                  <div className="flex-1 flex justify-center items-center"><Loader2 size={24} className="animate-spin text-[var(--primary)]" /></div>
                 ) : (
-                  <div className="p-4 flex flex-col gap-3">
-                    {messages.map((msg) => {
+                  <div className="p-4 flex flex-col gap-4">
+                    {messages.map((msg, index) => {
                       const isMe = msg.sender._id === user?._id;
+                      const showAvatar = !isMe && (index === messages.length - 1 || messages[index + 1]?.sender._id !== msg.sender._id);
+
                       return (
                         <motion.div key={msg._id}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className={`flex flex-col max-w-[80%] ${isMe ? 'self-end' : 'self-start'}`}
+                          className={`flex items-end gap-2 max-w-[85%] ${isMe ? 'self-end' : 'self-start'}`}
                         >
-                          <div className={`p-3 text-sm shadow-sm ${isMe ? 'text-white rounded-2xl rounded-tr-sm' : 'rounded-2xl rounded-tl-sm'}`}
+                          {!isMe && (
+                            <div className="w-6 flex-shrink-0">
+                              {showAvatar && (
+                                <img src={msg.sender.profilePicture || `https://ui-avatars.com/api/?name=${msg.sender.name}&background=5c3ce6&color=fff`} 
+                                  className="w-6 h-6 rounded-full object-cover shadow-sm" alt="" />
+                              )}
+                            </div>
+                          )}
+                          <div className={`px-4 py-2.5 text-[14px] shadow-sm font-medium ${isMe ? 'text-white rounded-2xl rounded-br-sm' : 'rounded-2xl rounded-bl-sm'}`}
                             style={isMe
-                              ? { background: 'linear-gradient(135deg, #2563EB, #8B5CF6)' }
-                              : { background: 'var(--card)', color: 'var(--foreground)', border: '1px solid var(--border)' }
+                              ? { background: 'linear-gradient(135deg, var(--primary) 0%, #a855f7 100%)' }
+                              : { background: 'var(--surface)', color: 'var(--foreground)', border: '1px solid var(--border)' }
                             }
                           >
                             {msg.text}
@@ -184,13 +205,12 @@ const ChatWidget = () => {
                       );
                     })}
                     {typing[activePartner?._id] && (
-                      <div className="self-start flex items-center gap-2 px-4 py-2 rounded-2xl" style={{ background: 'var(--muted)' }}>
-                        <div className="flex gap-1">
-                          <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--foreground-muted)', animationDelay: '0ms' }} />
-                          <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--foreground-muted)', animationDelay: '150ms' }} />
-                          <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--foreground-muted)', animationDelay: '300ms' }} />
+                      <div className="self-start flex items-end gap-2 max-w-[85%] ml-8">
+                        <div className="px-4 py-3 rounded-2xl rounded-bl-sm shadow-sm flex gap-1.5" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                          <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-gray-400" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-gray-400" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-gray-400" style={{ animationDelay: '300ms' }} />
                         </div>
-                        <span className="text-xs" style={{ color: 'var(--foreground-muted)' }}>typing...</span>
                       </div>
                     )}
                     <div ref={messagesEndRef} />
@@ -199,36 +219,49 @@ const ChatWidget = () => {
               )}
             </div>
 
+            {/* Input Area (Discord Style) */}
             {activePartner && (
-              <form onSubmit={handleSend} className="p-3 border-t flex gap-2 items-center"
-                style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
-              >
-                <input type="text" placeholder="Type a message..." value={inputText}
-                  onChange={(e) => { setInputText(e.target.value); handleTypingEmit(); }}
-                  className="flex-1 rounded-full px-4 py-2.5 text-sm focus:outline-none border"
-                  style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                />
-                <button type="submit" disabled={!inputText.trim()}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all ${inputText.trim() ? 'gradient-primary' : 'opacity-50'}`}
+              <div className="p-4 border-t glass-panel" style={{ borderColor: 'var(--border)' }}>
+                <form onSubmit={handleSend} className="flex gap-2 items-center rounded-xl px-3 py-2 border transition-all focus-within:ring-2 ring-[var(--primary-light)]"
+                  style={{ background: 'var(--muted)', borderColor: 'var(--border)' }}
                 >
-                  <Send size={14} className="ml-0.5" />
-                </button>
-              </form>
+                  <button type="button" className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-gray-400 hover:text-[var(--primary)]">
+                    <Plus size={20} />
+                  </button>
+                  <input type="text" placeholder={`Message @${activePartner.username}`} value={inputText}
+                    onChange={(e) => { setInputText(e.target.value); handleTypingEmit(); }}
+                    className="flex-1 bg-transparent border-none outline-none text-sm font-medium"
+                    style={{ color: 'var(--foreground)' }}
+                  />
+                  <button type="button" className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-gray-400 hover:text-[var(--primary)]">
+                    <Smile size={20} />
+                  </button>
+                  {inputText.trim() && (
+                    <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} type="submit"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all gradient-primary shadow-colored"
+                    >
+                      <Send size={14} className="ml-0.5" />
+                    </motion.button>
+                  )}
+                </form>
+              </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9 }}
-        className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg relative ${isOpen ? 'hidden' : 'flex'}`}
-        style={{ background: 'linear-gradient(135deg, #2563EB, #8B5CF6)' }}
+      {/* Floating Widget Button */}
+      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+        className={`w-14 h-14 rounded-full flex items-center justify-center text-white shadow-colored relative ${isOpen ? 'hidden' : 'flex'} gradient-primary`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <MessageSquare size={24} />
         {totalUnread > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold gradient-primary">
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full border-2 border-white dark:border-[var(--background)] flex items-center justify-center text-[11px] font-bold bg-red-500 text-white shadow-sm"
+          >
             {totalUnread}
-          </span>
+          </motion.span>
         )}
       </motion.button>
     </div>
