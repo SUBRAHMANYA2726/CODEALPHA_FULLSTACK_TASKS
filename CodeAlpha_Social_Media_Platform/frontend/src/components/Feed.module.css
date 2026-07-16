@@ -1,0 +1,15 @@
+.feedContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.storiesSection {
+  margin-bottom: 0.5rem;
+}
+
+.postsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
